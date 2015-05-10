@@ -1,5 +1,3 @@
-//TODO: construir lista de adjacensia ou validar se precisa de uma
-
 package main;
 
 import java.io.File;
@@ -319,10 +317,10 @@ public class Grafo
 	 */
 	private ArrayList<Vertice> BuscaLargura(Vertice destino)
 	{
-		ArrayList<Vertice> caminho = new ArrayList<Vertice>();;
+		HashMap<Vertice, Vertice> relacionamentos = new HashMap<Vertice, Vertice>();
+		ArrayList<Vertice> caminho = new ArrayList<Vertice>();
 		LinkedList<Vertice> listaVertices = new LinkedList<Vertice>();
-		Vertice atual = _inicio;
-		Vertice vizinho;
+		Vertice pai = null, vizinho = null, atual = _inicio;
 		
 		//adiciona na fila
 		listaVertices.addLast(atual);
@@ -339,18 +337,13 @@ public class Grafo
 			else
 				atual.visitado = true;
 			
-			caminho.add(atual);
-			
-			if (atual.equals(destino))
-				return caminho;
-			
 			//acessa o vértice
 			System.out.println("ACESSANDO:");
 			System.out.println((char)atual.valor);
 			
 			//para cada vizinho do vértice, mostra na tela
 			System.out.println("VIZINHO NÃO ACESSADO:");
-			for (int i = 0; i < _listaAdjacensia.get(atual).size(); i++)
+			for (int i =  _listaAdjacensia.get(atual).size() - 1; i >= 0; i--)
 			{
 				vizinho = _listaAdjacensia.get(atual).get(i);
 				
@@ -359,11 +352,55 @@ public class Grafo
 				
 				System.out.println((char)vizinho.valor);
 				
+				//enfila
 				listaVertices.addLast(vizinho);
+				
+				//cria um relacionamento do vizinho com o vértice anterior, para podermos pegar o caminho de volta
+				relacionamentos.put(vizinho, atual);
+				
+				//se estamos em um vértice que é vizinho do nosso destino
+				if (vizinho.equals(destino))
+				{
+					//adiciona o destino no caminho
+					caminho.add(vizinho);
+					
+					//pega o primeiro relacionamento
+					pai = relacionamentos.get(vizinho);
+					
+					//enquanto nao chegamos no inicio, vai retornando através dos relacionamentos e construindo o caminho
+					while (pai != _inicio)
+					{
+						caminho.add(pai);
+						pai = relacionamentos.get(pai);
+					}
+					
+					//adiciona o inicio no caminho
+					caminho.add(_inicio);
+					
+					//retorna o caminho
+					return caminho;
+				}
 			}
 		}
 		
 		return null;
+	}
+	
+	/**
+	 * Adiciona um vértice no grafo.
+	 * @param vizinho Vértice já existente, ao qual será adicionado o novo.
+	 * @param novo Novo vértice a ser adicionado.
+	 */
+	public void Adicionar(Vertice vizinho, Vertice novo)
+	{
+		_listaAdjacensia.get(vizinho).add(novo);
+		
+		if (!_listaAdjacensia.containsKey(novo))
+		{
+			_listaAdjacensia.put(novo, new ArrayList<Vertice>());
+		}
+		
+		_listaAdjacensia.get(novo).add(vizinho);
 	}
 	
 	private void LimpaVisitas()
