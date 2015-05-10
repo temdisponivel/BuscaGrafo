@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.Map.Entry;
 import java.util.Stack;
 
@@ -197,7 +198,7 @@ public class Grafo
 	 */
 	public ArrayList<Vertice> BuscaProfundidade(char valorDestino)
 	{
-		ArrayList<Vertice> retorno = PercorreProfundidade(new Vertice(valorDestino));
+		ArrayList<Vertice> retorno = PercorreProfundidade(_inicio, new Vertice(valorDestino));
 		
 		if (retorno == null)
 			System.out.println("Não existe caminho");
@@ -267,7 +268,7 @@ public class Grafo
 		
 		Vertice atual = _inicio;
 		Stack<Vertice> pilha = new Stack<Vertice>();
-		ArrayList<Vertice> caminho = null;
+		ArrayList<Vertice> caminho = new ArrayList<Vertice>();;
 		
 		//adiciona na pilha
 		pilha.push(atual);
@@ -275,15 +276,8 @@ public class Grafo
 		//enquanto a pilha nao estiver vazia
 		while (!pilha.empty())
 		{
-			if (pilha.contains(destino))
-			{
-				caminho = new ArrayList<Vertice>();
-				caminho.addAll(pilha);
-				return caminho;
-			}
-			
 			//desempinha
-			Iterator<Vertice> iterador = _listaAdjacensia.get((atual = pilha.pop())).iterator();
+			ListIterator<Vertice> iterador = _listaAdjacensia.get((atual = pilha.pop())).listIterator(_listaAdjacensia.get((atual)).size());
 			
 			//valida se já foi visitado para poder acessar
 			if (atual.visitado)
@@ -291,14 +285,19 @@ public class Grafo
 			else
 				atual.visitado = true;
 			
+			caminho.add(atual);
+			
+			if (atual.equals(destino))
+				return caminho;
+			
 			System.out.println("ACESSANDO:");
 			System.out.println((char)atual.valor);
 			
 			System.out.println("VIZINHO NÃO ACESSADO:");
 			//para cada vizinho, adiciona na pilha
-			while (iterador.hasNext())
+			while (iterador.hasPrevious())
 			{
-				Vertice vizinho = iterador.next();
+				Vertice vizinho = iterador.previous();
 				
 				if (vizinho.visitado)
 					continue;

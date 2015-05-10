@@ -18,7 +18,7 @@ public class Main
 		System.out.println("LARGURA:");
 		g.PercursoLargura();
 		
-		ArrayList<Vertice> caminho = g.BuscaProfundidade('6');
+		ArrayList<Vertice> caminho = g.BuscaLargura('8');
 		
 		System.out.println("CAMINHO:");
 		
