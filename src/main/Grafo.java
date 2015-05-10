@@ -6,7 +6,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map.Entry;
+import java.util.Stack;
 
 /**
  * Classe que representa um grafo.
@@ -14,26 +17,15 @@ import java.util.Map.Entry;
  *
  */
 public class Grafo
-{
-	/**
-	 * Classe que representa uma aresta do grafo.
-	 * @author matheus
-	 *
-	 */
-	public class Aresta
-	{
-		public Vertice a = null;
-		public Vertice b = null;
-	}
-	
+{	
 	/**
 	 * Classe que representa um vértice do grafo.
 	 * @author matheus
 	 *
 	 */
-	public class Vertice
+	public static class Vertice
 	{
-		public ArrayList<Aresta> arestas = null;
+		static public ArrayList<Vertice> verticesGrafo = null;
 		public int valor = 0;
 		public boolean visitado = false;
 		
@@ -43,7 +35,9 @@ public class Grafo
 		public Vertice(int valor)
 		{
 			this.valor = valor;
-			this.arestas = new ArrayList<Aresta>();  
+			
+			if (verticesGrafo == null)
+				verticesGrafo = new ArrayList<Vertice>();
 		}
 		
 		@Override
@@ -80,19 +74,16 @@ public class Grafo
 	private void ControiGrafo()
 	{
 		FileReader leitor = null;
-		Vertice verticeAtual = null;
-		Aresta arestaAtual = null;
+		Vertice verticeA = null;
+		Vertice verticeB = null;
 		char[] caracteres = null;
 		char caracter = '\0';
-		char inicio = '\0';
 		int quantidade = 0;
-		ArrayList<Vertice> vertices;
 		
 		try
 		{
 			leitor = new FileReader(new File(_arquivo));
 			caracteres = new char[1000];
-			vertices = new ArrayList<Vertice>();
 			
 			for (quantidade = 0; leitor.ready();)
 			{
@@ -104,48 +95,40 @@ public class Grafo
 				caracteres[quantidade++] = caracter;
 			}
 			
-			inicio = caracteres[0];
-			
-			for (int i = 1; i < quantidade;)
+			for (int i = 0; i < quantidade;)
 			{
 				//controi o vertice e adiciona na lista
-				verticeAtual = new Vertice(caracteres[i++]);
+				verticeA = new Vertice(caracteres[i++]);
+				
+				//consistencia de referencia
+				if (Vertice.verticesGrafo.contains(verticeA))
+					verticeA = Vertice.verticesGrafo.get(Vertice.verticesGrafo.indexOf(verticeA)); 
+				else
+					Vertice.verticesGrafo.add(verticeA);
+				
+				if (i == 1)
+				{
+					_inicio = verticeA;
+					continue;
+				}
+				
+				verticeB = new Vertice(caracteres[i++]);
+				
+				//consistencia de referencia
+				if (Vertice.verticesGrafo.contains(verticeB))
+					verticeB = Vertice.verticesGrafo.get(Vertice.verticesGrafo.indexOf(verticeB));
+				else
+					Vertice.verticesGrafo.add(verticeB);
 				
 				//se já houver o elemento no array, só recupera, senão adiciona
-				if (vertices.contains(verticeAtual))
-					verticeAtual = vertices.get(vertices.indexOf(verticeAtual));
-				else
-					vertices.add(verticeAtual);
+				if (!_listaAdjacensia.containsKey(verticeA))
+					_listaAdjacensia.put(verticeA, new ArrayList<Vertice>());
 				
-				//controi a aresta e define o vertice que acabamos de criar 
-				arestaAtual = new Aresta();
-				arestaAtual.a = verticeAtual;
-				
-				//adiciona a aresta ao vertice a
-				verticeAtual.arestas.add(arestaAtual);
-				
-				//cria o outro vertice e define na aresta
-				verticeAtual = new Vertice(caracteres[i++]);
-				arestaAtual.b = verticeAtual;
-				
-				//adiciona a aresta no vértice b
-				verticeAtual.arestas.add(arestaAtual);
-			}			
-			
-			//para cada vértice, contrói a lista de adjasencia
-			for (int i = 0; i < vertices.size(); i++)
-			{
-				verticeAtual = vertices.get(i);
-				
-				if (verticeAtual.valor == inicio)
-					_inicio = verticeAtual;
-				
-				_listaAdjacensia.put(verticeAtual, new ArrayList<Vertice>());
-				
-				for (int j = 0; j < verticeAtual.arestas.size(); j++)
-				{
-					_listaAdjacensia.get(verticeAtual).add(verticeAtual.arestas.get(j).b);
-				}
+				if (!_listaAdjacensia.containsKey(verticeB))
+					_listaAdjacensia.put(verticeB, new ArrayList<Vertice>());
+					
+				_listaAdjacensia.get(verticeA).add(verticeB);
+				_listaAdjacensia.get(verticeB).add(verticeA);
 			}
 			
 			System.out.println("");
@@ -170,35 +153,87 @@ public class Grafo
 	 */
 	public void PercursoProfundidade()
 	{
-		Vertice atual;
-		Vertice vizinho;
+		this.PercorreProfundidade();
+		this.LimpaVisitas();
+	}
+	
+	/**
+	 * Percorre o grafo em profundidade recursivamente.
+	 * @param atual
+	 */
+	private void PercorreProfundidade(Vertice atual)
+	{
+		//pega os vizinhos do vértice atual
+		Iterator<Vertice> iterador = _listaAdjacensia.get(atual).iterator();
 		
-		for (Entry<Vertice, ArrayList<Vertice>> entrada : _listaAdjacensia.entrySet())
+		//valida se já foi visto para poder acessar
+		if (atual.visitado)
+			return;
+		else
+			atual.visitado = true;
+		
+		System.out.println("ACESSANDO:");
+		System.out.println((char)atual.valor);
+		
+		System.out.println("VIZINHO NÃO ACESSADO:");
+		
+		//para cada vizinho, chama recursao
+		while (iterador.hasNext())
 		{
-			atual = entrada.getKey();
+			Vertice vizinho = iterador.next();
 			
-			System.out.println("ACESSANDO VERTICE");
+			if (vizinho.visitado)
+				continue;
+			
+			System.out.println((char)vizinho.valor);
+			
+			this.PercorreProfundidade(vizinho);
+		}
+	}
+	
+	/**
+	 * Percorre o grafo em profundidade iterativamente.
+	 */
+	private void PercorreProfundidade()
+	{
+		Vertice atual = _inicio;
+		Stack<Vertice> pilha = new Stack<Vertice>();
+		
+		//adiciona na pilha
+		pilha.push(atual);
+		
+		//enquanto a pilha nao estiver vazia
+		while (!pilha.empty())
+		{
+			//desempinha
+			Iterator<Vertice> iterador = _listaAdjacensia.get((atual = pilha.pop())).iterator();
+			
+			//valida se já foi visitado para poder acessar
+			if (atual.visitado)
+				continue;
+			else
+				atual.visitado = true;
+			
+			System.out.println("ACESSANDO:");
 			System.out.println((char)atual.valor);
 			
-			System.out.println("PERCORRENDO PROFUNDIDADE");
-			for (int i = 0; i < entrada.getValue().size(); i++)
+			System.out.println("VIZINHO NÃO ACESSADO:");
+			//para cada vizinho, adiciona na pilha
+			while (iterador.hasNext())
 			{
-				vizinho = entrada.getValue().get(i);
+				Vertice vizinho = iterador.next();
 				
 				if (vizinho.visitado)
 					continue;
 				
 				System.out.println((char)vizinho.valor);
+				
+				pilha.push(vizinho);
 			}
-			
-			atual.visitado = true;
 		}
 		
-		for (Entry<Vertice, ArrayList<Vertice>> entrada : _listaAdjacensia.entrySet())
-		{
-			atual = entrada.getKey();
-			atual.visitado = false;
-		}
+		//seta todas as posições como não visitadas
+		this.LimpaVisitas();
 	}
 	
 	/**
@@ -206,54 +241,90 @@ public class Grafo
 	 */
 	public void PercursoLargura()
 	{
-		Vertice atual;
+		LinkedList<Vertice> listaVertices = new LinkedList<Vertice>();
+		Vertice atual = _inicio;
 		Vertice vizinho;
 		
-		for (Entry<Vertice, ArrayList<Vertice>> entrada : _listaAdjacensia.entrySet())
+		//adiciona na fila
+		listaVertices.addLast(atual);
+		
+		//enquanto a fila não estiver vazia
+		while (!listaVertices.isEmpty())
 		{
-			atual = entrada.getKey();
+			//desenfila
+			atual = listaVertices.removeFirst();
 			
-			System.out.println("ACESSANDO VERTICE");
+			//valida se já foi visitado para poder acessar
+			if (atual.visitado)
+				continue;
+			else
+				atual.visitado = true;
+			
+			//acessa o vértice
+			System.out.println("ACESSANDO:");
 			System.out.println((char)atual.valor);
 			
-			System.out.println("PERCORRENDO VIZINHOS");
-			for (int i = 0; i < entrada.getValue().size(); i++)
+			//para cada vizinho do vértice, mostra na tela
+			System.out.println("VIZINHO NÃO ACESSADO:");
+			for (int i = 0; i < _listaAdjacensia.get(atual).size(); i++)
 			{
-				vizinho = entrada.getValue().get(i);
+				vizinho = _listaAdjacensia.get(atual).get(i);
 				
 				if (vizinho.visitado)
 					continue;
 				
 				System.out.println((char)vizinho.valor);
+				
+				listaVertices.addLast(vizinho);
 			}
-			
-			atual.visitado = true;
 		}
 		
+		this.LimpaVisitas();
+	}
+	
+	private void LimpaVisitas()
+	{
 		for (Entry<Vertice, ArrayList<Vertice>> entrada : _listaAdjacensia.entrySet())
 		{
-			atual = entrada.getKey();
-			atual.visitado = false;
+			entrada.getKey().visitado = false;
 		}
 	}
 	
 	/**
 	 * Faz a busca em largura e retorna o caminho do grafo. Do ponto de entrada até o resultado. Retorna nulo caso não exista um caminho.
-	 * @param destino Vértice de destino da busca.
+	 * @param valorDestino Valor do vértice de destino da busca.
 	 * @return Caminho do ponto de entrada até o destino. Ou nulo caso não exista o caminho.
+	 * @throws Exception Exception caso o destino informado não exista.
 	 */
-	public ArrayList<Vertice> BuscaLargura(Vertice destino)
+	public ArrayList<Vertice> BuscaLargura(int valorDestino) throws Exception
 	{
+		Vertice destino = null;
+		
+		if (!_listaAdjacensia.containsKey(destino = new Vertice(valorDestino)))
+		{
+			System.out.println("Não existe o destino informado");
+			throw new Exception("Não existe o destino informado");	
+		}
+		
 		return null;
 	}
 	
 	/**
 	 * Faz a busca em profundidade e retorna o caminho do grafo. Do ponto de entrada até o resultado. Retorna nulo caso não exista um caminho.
-	 * @param destino Vértice de destino da busca.
+	 * @param valorDestino Valor do vértice de destino da busca.
 	 * @return Caminho do ponto de entrada até o destino. Ou nulo caso não exista o caminho.
+	 * @throws Exception Exception caso o destino informado não exista.
 	 */
-	public ArrayList<Vertice> BuscaProfundidade(Vertice destino)
+	public ArrayList<Vertice> BuscaProfundidade(int valorDestino) throws Exception
 	{
+		Vertice destino = null;
+		
+		if (!_listaAdjacensia.containsKey(destino = new Vertice(valorDestino)))
+		{
+			System.out.println("Não existe o destino informado");
+			throw new Exception("Não existe o destino informado");	
+		}
+		
 		return null;
 	}
 }
