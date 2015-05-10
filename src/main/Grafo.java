@@ -26,13 +26,13 @@ public class Grafo
 	public static class Vertice
 	{
 		static public ArrayList<Vertice> verticesGrafo = null;
-		public int valor = 0;
+		public char valor = 0;
 		public boolean visitado = false;
 		
 		/**
 		 * Cria um vértice com várias arestas.
 		 */
-		public Vertice(int valor)
+		public Vertice(char valor)
 		{
 			this.valor = valor;
 			
@@ -43,6 +43,9 @@ public class Grafo
 		@Override
 		public boolean equals(Object obj)
 		{
+			if(obj == null)
+				return false;
+			
 			return this.hashCode() == obj.hashCode();
 		}
 		
@@ -50,6 +53,12 @@ public class Grafo
 		public int hashCode()
 		{
 			return valor;
+		}
+		
+		@Override
+		public String toString()
+		{
+			return String.valueOf(valor);
 		}
 	}
 	
@@ -153,22 +162,73 @@ public class Grafo
 	 */
 	public void PercursoProfundidade()
 	{
-		this.PercorreProfundidade();
+		this.PercorreProfundidade(_inicio, null);
 		this.LimpaVisitas();
 	}
 	
 	/**
-	 * Percorre o grafo em profundidade recursivamente.
-	 * @param atual
+	 * Percorre todo o grafo em largura.
 	 */
-	private void PercorreProfundidade(Vertice atual)
+	public void PercursoLargura()
 	{
+		this.BuscaLargura(null);
+		this.LimpaVisitas();
+	}
+	
+	/**
+	 * Faz a busca em largura e retorna o caminho do grafo. Do ponto de entrada até o resultado. Retorna nulo caso não exista um caminho.
+	 * @param valorDestino Valor do vértice de destino da busca.
+	 * @return Caminho do ponto de entrada até o destino. Ou nulo caso não exista o caminho.
+	 */
+	public ArrayList<Vertice> BuscaLargura(char valorDestino)
+	{
+		ArrayList<Vertice> retorno = BuscaLargura(new Vertice(valorDestino));
+		
+		if (retorno == null)
+			System.out.println("Não existe caminho");
+		
+		return retorno;
+	}
+	
+	/**
+	 * Faz a busca em profundidade e retorna o caminho do grafo. Do ponto de entrada até o resultado. Retorna nulo caso não exista um caminho.
+	 * @param valorDestino Valor do vértice de destino da busca.
+	 * @return Caminho do ponto de entrada até o destino. Ou nulo caso o caminho não exista o caminho.
+	 */
+	public ArrayList<Vertice> BuscaProfundidade(char valorDestino)
+	{
+		ArrayList<Vertice> retorno = PercorreProfundidade(new Vertice(valorDestino));
+		
+		if (retorno == null)
+			System.out.println("Não existe caminho");
+		
+		return retorno;
+		
+	}
+	
+	/**
+	 * Faz a busca em profundidade e retorna o caminho do grafo. Do ponto de entrada até o resultado. Retorna nulo caso não exista um caminho.
+	 * @param valorDestino Valor do vértice de destino da busca.
+	 * @param atual Vértice atual para recursão.
+	 * @return Caminho do ponto de entrada até o destino. Ou nulo caso o caminho não exista o caminho.
+	 */
+	private ArrayList<Vertice> PercorreProfundidade(Vertice atual, Vertice destino)
+	{
+		ArrayList<Vertice> caminho = null;
+		
+		if (atual.equals(destino))
+		{
+			caminho = new ArrayList<Vertice>();
+			caminho.add(atual);
+			return caminho;
+		}
+		
 		//pega os vizinhos do vértice atual
 		Iterator<Vertice> iterador = _listaAdjacensia.get(atual).iterator();
 		
 		//valida se já foi visto para poder acessar
 		if (atual.visitado)
-			return;
+			return null;
 		else
 			atual.visitado = true;
 		
@@ -187,17 +247,27 @@ public class Grafo
 			
 			System.out.println((char)vizinho.valor);
 			
-			this.PercorreProfundidade(vizinho);
+			if ((caminho = this.PercorreProfundidade(vizinho, destino)) != null)
+			{
+				caminho.add(0, atual);
+				return caminho;
+			}
 		}
+		
+		return null;
 	}
 	
 	/**
-	 * Percorre o grafo em profundidade iterativamente.
+	 * Faz a busca em profundidade e retorna o caminho do grafo. Do ponto de entrada até o resultado. Retorna nulo caso não exista um caminho.
+	 * @param valorDestino Valor do vértice de destino da busca.
+	 * @return Caminho do ponto de entrada até o destino. Ou nulo caso o caminho não exista o caminho.
 	 */
-	private void PercorreProfundidade()
+	private ArrayList<Vertice> PercorreProfundidade(Vertice destino)
 	{
+		
 		Vertice atual = _inicio;
 		Stack<Vertice> pilha = new Stack<Vertice>();
+		ArrayList<Vertice> caminho = null;
 		
 		//adiciona na pilha
 		pilha.push(atual);
@@ -205,6 +275,13 @@ public class Grafo
 		//enquanto a pilha nao estiver vazia
 		while (!pilha.empty())
 		{
+			if (pilha.contains(destino))
+			{
+				caminho = new ArrayList<Vertice>();
+				caminho.addAll(pilha);
+				return caminho;
+			}
+			
 			//desempinha
 			Iterator<Vertice> iterador = _listaAdjacensia.get((atual = pilha.pop())).iterator();
 			
@@ -227,20 +304,23 @@ public class Grafo
 					continue;
 				
 				System.out.println((char)vizinho.valor);
-				
+
 				pilha.push(vizinho);
 			}
 		}
 		
-		//seta todas as posições como não visitadas
-		this.LimpaVisitas();
+		return null;
 	}
 	
 	/**
-	 * Percorre todo o grafo em largura.
+	 * Faz a busca em largura e retorna o caminho do grafo. Do ponto de entrada até o resultado. Retorna nulo caso não exista um caminho.
+	 * @param valorDestino Valor do vértice de destino da busca.
+	 * @param atual Vértice atual para recursão.
+	 * @return Caminho do ponto de entrada até o destino. Ou nulo caso o caminho não exista o caminho.
 	 */
-	public void PercursoLargura()
+	private ArrayList<Vertice> BuscaLargura(Vertice destino)
 	{
+		ArrayList<Vertice> caminho = new ArrayList<Vertice>();;
 		LinkedList<Vertice> listaVertices = new LinkedList<Vertice>();
 		Vertice atual = _inicio;
 		Vertice vizinho;
@@ -259,6 +339,11 @@ public class Grafo
 				continue;
 			else
 				atual.visitado = true;
+			
+			caminho.add(atual);
+			
+			if (atual.equals(destino))
+				return caminho;
 			
 			//acessa o vértice
 			System.out.println("ACESSANDO:");
@@ -279,7 +364,7 @@ public class Grafo
 			}
 		}
 		
-		this.LimpaVisitas();
+		return null;
 	}
 	
 	private void LimpaVisitas()
@@ -288,43 +373,5 @@ public class Grafo
 		{
 			entrada.getKey().visitado = false;
 		}
-	}
-	
-	/**
-	 * Faz a busca em largura e retorna o caminho do grafo. Do ponto de entrada até o resultado. Retorna nulo caso não exista um caminho.
-	 * @param valorDestino Valor do vértice de destino da busca.
-	 * @return Caminho do ponto de entrada até o destino. Ou nulo caso não exista o caminho.
-	 * @throws Exception Exception caso o destino informado não exista.
-	 */
-	public ArrayList<Vertice> BuscaLargura(int valorDestino) throws Exception
-	{
-		Vertice destino = null;
-		
-		if (!_listaAdjacensia.containsKey(destino = new Vertice(valorDestino)))
-		{
-			System.out.println("Não existe o destino informado");
-			throw new Exception("Não existe o destino informado");	
-		}
-		
-		return null;
-	}
-	
-	/**
-	 * Faz a busca em profundidade e retorna o caminho do grafo. Do ponto de entrada até o resultado. Retorna nulo caso não exista um caminho.
-	 * @param valorDestino Valor do vértice de destino da busca.
-	 * @return Caminho do ponto de entrada até o destino. Ou nulo caso não exista o caminho.
-	 * @throws Exception Exception caso o destino informado não exista.
-	 */
-	public ArrayList<Vertice> BuscaProfundidade(int valorDestino) throws Exception
-	{
-		Vertice destino = null;
-		
-		if (!_listaAdjacensia.containsKey(destino = new Vertice(valorDestino)))
-		{
-			System.out.println("Não existe o destino informado");
-			throw new Exception("Não existe o destino informado");	
-		}
-		
-		return null;
 	}
 }
