@@ -3,6 +3,7 @@ package main;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -11,7 +12,7 @@ import java.util.Map.Entry;
 import java.util.Stack;
 
 /**
- * Classe que representa um grafo.
+ * Classe que representa um grafo. Implementada utilizando lista de adjacensia.
  * @author matheus
  *
  */
@@ -343,7 +344,7 @@ public class Grafo
 			
 			//para cada vizinho do vértice, mostra na tela
 			System.out.println("VIZINHO NÃO ACESSADO:");
-			for (int i =  _listaAdjacensia.get(atual).size() - 1; i >= 0; i--)
+			for (int i =  0; i < _listaAdjacensia.get(atual).size(); i++)
 			{
 				vizinho = _listaAdjacensia.get(atual).get(i);
 				
@@ -376,6 +377,9 @@ public class Grafo
 					
 					//adiciona o inicio no caminho
 					caminho.add(_inicio);
+					
+					//faz o caminho contrário
+					Collections.reverse(caminho);
 					
 					//retorna o caminho
 					return caminho;
